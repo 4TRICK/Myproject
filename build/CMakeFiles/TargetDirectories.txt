@@ -1,0 +1,15 @@
+C:/MinGW/Myproject/build/CMakeFiles/MyProject.dir
+C:/MinGW/Myproject/build/CMakeFiles/MyProjectTests.dir
+C:/MinGW/Myproject/build/CMakeFiles/INSTALL.dir
+C:/MinGW/Myproject/build/CMakeFiles/ALL_BUILD.dir
+C:/MinGW/Myproject/build/CMakeFiles/ZERO_CHECK.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/CMakeFiles/INSTALL.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/CMakeFiles/ALL_BUILD.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/googlemock/CMakeFiles/gmock.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/googlemock/CMakeFiles/gmock_main.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/googlemock/CMakeFiles/INSTALL.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/googlemock/CMakeFiles/ALL_BUILD.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/googletest/CMakeFiles/gtest.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/googletest/CMakeFiles/gtest_main.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/googletest/CMakeFiles/INSTALL.dir
+C:/MinGW/Myproject/build/_deps/googletest-build/googletest/CMakeFiles/ALL_BUILD.dir

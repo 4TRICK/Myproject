@@ -1,0 +1,5 @@
+if(EXISTS "C:/MinGW/Myproject/build/MyProjectTests[1]_tests.cmake")
+  include("C:/MinGW/Myproject/build/MyProjectTests[1]_tests.cmake")
+else()
+  add_test(MyProjectTests_NOT_BUILT MyProjectTests_NOT_BUILT)
+endif()

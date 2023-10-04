@@ -1,0 +1,4 @@
+# CMake generation dependency list for this directory.
+C:/MinGW/Myproject/build/_deps/googletest-src/CMakeLists.txt
+C:/Program Files/CMake/share/cmake-3.27/Modules/CMakeDependentOption.cmake
+C:/Program Files/CMake/share/cmake-3.27/Modules/GNUInstallDirs.cmake
