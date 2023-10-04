@@ -1,117 +1,136 @@
 #include <iostream>
-#include <string>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
+#include <vector>
+#include <string>
 
 
-using namespace std;
+using namespace std; // Р”РёСЂРµРєС‚РёРІР° РґР»СЏ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІР° РёРјРµРЅ std
 
-// Интерфейс для источника данных
+// РњРѕРґСѓР»СЊ 1: РРЅС‚РµСЂС„РµР№СЃ РґР»СЏ source
 class Source {
 public:
-    virtual char readByte() = 0;
+    // Р§РёС‚Р°РµС‚ Р±Р°Р№С‚ РёР· РёСЃС‚РѕС‡РЅРёРєР° Рё РІРѕР·РІСЂР°С‰Р°РµС‚ РµРіРѕ РІ РїР°СЂР°РјРµС‚СЂРµ byte
+    virtual bool ReadByte(uint8_t& byte) = 0;
 };
 
-// Интерфейс для приемника данных
+// РњРѕРґСѓР»СЊ 2: РРЅС‚РµСЂС„РµР№СЃ РґР»СЏ sink
 class Sink {
 public:
-    virtual void writeString(const string& str) = 0;
+    // Р—Р°РїРёСЃС‹РІР°РµС‚ СЃС‚СЂРѕРєСѓ РІ РїСЂРёРµРјРЅРёРє
+    virtual void WriteString(const string& str) = 0;
 };
 
-// Пример реализации источника данных для ввода с консоли
-class ConsoleSource : public Source {
+class ByteConverter {
 public:
-    char readByte() override {
-        char byte;
-        cin >> byte;
-        return byte;
-    }
-};
+    // РњРѕРґСѓР»СЊ 3: РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РєР»Р°СЃСЃР° ByteConverter
+    ByteConverter(Source* source, Sink* sink) : source_(source), sink_(sink), running_(false) {}
 
-// Пример реализации приемника данных для вывода на консоль
-class ConsoleSink : public Sink {
-public:
-    void writeString(const string& str) override {
-        cout << "Received: " << str << endl;
-    }
-};
-
-// Класс, который выполняет чтение, конвертацию и запись данных
-class DataProcessor {
-public:
-    DataProcessor(Source& source, Sink& sink) : source_(source), sink_(sink), running_(false) {}
-
-    // Метод для запуска обработки данных в отдельном потоке
-    void start() {
-        running_ = true;
-        thread_ = thread(&DataProcessor::process, this);
+    // Р—Р°РїСѓСЃС‚РёС‚СЊ РєРѕРЅРІРµСЂС‚РµСЂ
+    void Start() {
+        if (!running_) {
+            running_ = true;
+            thread_ = thread(&ByteConverter::ConvertBytes, this);
+        }
     }
 
-    // Метод для остановки потока
-    void stop() {
-        running_ = false;
-        if (thread_.joinable()) {
+    // РћСЃС‚Р°РЅРѕРІРёС‚СЊ РєРѕРЅРІРµСЂС‚РµСЂ
+    void Stop() {
+        if (running_) {
+            running_ = false;
+            cv_.notify_one();
             thread_.join();
         }
     }
 
 private:
-    Source& source_;
-    Sink& sink_;
-    thread thread_;
-    bool running_;
-    mutex mtx_;
-
-    void process() {
+    // РњРѕРґСѓР»СЊ 4: РњРµС‚РѕРґ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†РёРё Р±Р°Р№С‚РѕРІ
+    void ConvertBytes() {
         while (running_) {
-            char byte = source_.readByte();
-            char type = (byte >> 6) & 0x03;
-            char data = byte & 0x3F;
-
-            string result;
-
-            if (type == 0b00) {
-                // data - беззнаковое целое
-                result = to_string(static_cast<unsigned int>(data));
-            }
-            else if (type == 0b01) {
-                // data - знаковое целое
-                result = to_string(static_cast<int>(data));
-            }
-            else if (type == 0b10) {
-                // data - буква латинского алфавита
-                result = string(1, 'a' + data);
+            uint8_t byte;
+            if (source_->ReadByte(byte)) {
+                string converted_str = ConvertByte(byte);
+                sink_->WriteString(converted_str);
             }
             else {
-                // Обработка других значений type по необходимости
-            }
-
-            {
-                lock_guard<mutex> lock(mtx_);
-                sink_.writeString(result);
+                // Р•СЃР»Рё С‡С‚РµРЅРёРµ Р·Р°РІРµСЂС€РµРЅРѕ, РѕСЃС‚Р°РЅР°РІР»РёРІР°РµРј РїРѕС‚РѕРє
+                running_ = false;
             }
         }
+    }
+
+    // РњРѕРґСѓР»СЊ 5: РњРµС‚РѕРґ РґР»СЏ РєРѕРЅРІРµСЂС‚Р°С†РёРё РѕРґРЅРѕРіРѕ Р±Р°Р№С‚Р°
+    string ConvertByte(uint8_t byte) {
+        uint8_t type = (byte >> 6) & 0x03;
+        uint8_t data = byte & 0x3F;
+
+        if (type == 0b00) {
+            // Р‘РµР·Р·РЅР°РєРѕРІРѕРµ С†РµР»РѕРµ
+            return to_string(data);
+        }
+        else if (type == 0b01) {
+            // Р—РЅР°РєРѕРІРѕРµ С†РµР»РѕРµ
+            int8_t signed_data = static_cast<int8_t>(data);
+            return to_string(signed_data);
+        }
+        else if (type == 0b10) {
+            // Р‘СѓРєРІР° Р»Р°С‚РёРЅСЃРєРѕРіРѕ Р°Р»С„Р°РІРёС‚Р°
+            char letter = 'a' + data;
+            return string(1, letter);
+        }
+        else {
+            // РќРµРёР·РІРµСЃС‚РЅС‹Р№ С‚РёРї
+            return "";
+        }
+    }
+
+    Source* source_;
+    Sink* sink_;
+    thread thread_;
+    bool running_;
+    mutex mutex_;
+    condition_variable cv_;
+};
+
+// РњРѕРґСѓР»СЊ 6: РџСЂРёРјРµСЂ СЂРµР°Р»РёР·Р°С†РёРё source
+class ExampleSource : public Source {
+public:
+    ExampleSource(const vector<uint8_t>& data) : data_(data), index_(0) {}
+
+    // Р РµР°Р»РёР·Р°С†РёСЏ РјРµС‚РѕРґР° С‡С‚РµРЅРёСЏ Р±Р°Р№С‚Р° РёР· РёСЃС‚РѕС‡РЅРёРєР°
+    bool ReadByte(uint8_t& byte) override {
+        if (index_ < data_.size()) {
+            byte = data_[index_++];
+            return true;
+        }
+        return false;
+    }
+
+private:
+    const vector<uint8_t>& data_;
+    size_t index_;
+};
+
+// РњРѕРґСѓР»СЊ 7: РџСЂРёРјРµСЂ СЂРµР°Р»РёР·Р°С†РёРё sink
+class ExampleSink : public Sink {
+public:
+    // Р РµР°Р»РёР·Р°С†РёСЏ РјРµС‚РѕРґР° Р·Р°РїРёСЃРё СЃС‚СЂРѕРєРё РІ РїСЂРёРµРјРЅРёРє
+    void WriteString(const string& str) override {
+        cout << "Received: " << str << endl;
     }
 };
 
 int main() {
-    ConsoleSource source;
-    ConsoleSink sink;
+    vector<uint8_t> data = { 0b00001001, 0b01000110, 0b11011011 };
 
-    DataProcessor processor(source, sink);
+    ExampleSource source(data);
+    ExampleSink sink;
+    ByteConverter converter(&source, &sink);
 
-    processor.start();
-
-    cout << "Data processing is running. Press 'q' to stop..." << endl;
-    while (true) {
-        char input;
-        cin >> input;
-        if (input == 'q' || input == 'Q') {
-            break;
-        }
-    }
-
-    processor.stop();
+    converter.Start();
+    this_thread::sleep_for(chrono::milliseconds(1000)); //  РѕР¶РёРґР°РЅРёРµ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†РёРё СЂР°Р±РѕС‚С‹
+    converter.Stop();
 
     return 0;
 }

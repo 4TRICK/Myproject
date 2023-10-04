@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "DataProcessor.h" // Включите заголовочный файл для класса DataProcessor
+#include "test.h" // Включите заголовочный файл для класса DataProcessor
 
 using namespace testing;
 
